@@ -39,7 +39,7 @@ type AuthorizeRequest struct {
 // Authorization data
 type AuthorizeData struct {
 	// Client information
-	ClientId string `bson:"client"`
+	ClientId string `bson:"clientid"`
 
 	// Authorization code
 	Code string `bson:"code"`

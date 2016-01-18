@@ -55,34 +55,34 @@ type AccessRequest struct {
 // AccessData represents an access grant (tokens, expiration, client, etc)
 type AccessData struct {
 	// Client information
-	Client Client
+	ClientId string `bson:"clientid"`
 
 	// Authorize data, for authorization code
-	AuthorizeData *AuthorizeData
+	AuthorizeData *AuthorizeData `bson:"-"`
 
 	// Previous access data, for refresh token
 	AccessData *AccessData
 
 	// Access token
-	AccessToken string
+	AccessToken string `bson:"accesstoken"`
 
 	// Refresh Token. Can be blank
-	RefreshToken string
+	RefreshToken string `bson:"refreshtoken"`
 
 	// Token expiration in seconds
-	ExpiresIn int32
+	ExpiresIn int32 `bson:"expiresin"`
 
 	// Requested scope
-	Scope string
+	Scope string `bson:"scope"`
 
 	// Redirect Uri from request
-	RedirectUri string
+	RedirectUri string `bson:"redirecturi"`
 
 	// Date created
-	CreatedAt time.Time
+	CreatedAt time.Time `bson:"createdat"`
 
 	// Data to be passed to storage. Not used by the library.
-	UserData interface{}
+	UserData interface{} `bson:"userdata"`
 }
 
 // IsExpired returns true if access expired
@@ -291,7 +291,6 @@ func (s *Server) handleRefreshTokenRequest(w *Response, r *http.Request) *Access
 	if ret.Client = getClient(auth, w.Storage, w); ret.Client == nil {
 		return nil
 	}
-
 	// must be a valid refresh code
 	var err error
 	ret.AccessData, err = w.Storage.LoadRefresh(ret.Code)
@@ -304,23 +303,36 @@ func (s *Server) handleRefreshTokenRequest(w *Response, r *http.Request) *Access
 		w.SetError(E_UNAUTHORIZED_CLIENT, "")
 		return nil
 	}
-	if ret.AccessData.Client == nil {
+	//HOPJOY BEGIN
+	if ret.AccessData.RedirectUri == "" {
 		w.SetError(E_UNAUTHORIZED_CLIENT, "")
 		return nil
 	}
-	if ret.AccessData.Client.GetRedirectUri() == "" {
-		w.SetError(E_UNAUTHORIZED_CLIENT, "")
-		return nil
-	}
-
-	// client must be the same as the previous token
-	if ret.AccessData.Client.GetId() != ret.Client.GetId() {
+	if ret.AccessData.ClientId != ret.Client.GetId() {
 		w.SetError(E_INVALID_CLIENT, "")
 		w.InternalError = errors.New("Client id must be the same from previous token")
 		return nil
 
 	}
+	//HOPJOY END
+	/*
+			if ret.AccessData.Client == nil {
+				w.SetError(E_UNAUTHORIZED_CLIENT, "")
+				return nil
+			}
+			if ret.AccessData.Client.GetRedirectUri() == "" {
+				w.SetError(E_UNAUTHORIZED_CLIENT, "")
+				return nil
+			}
 
+		// client must be the same as the previous token
+		if ret.AccessData.Client.GetId() != ret.Client.GetId() {
+			w.SetError(E_INVALID_CLIENT, "")
+			w.InternalError = errors.New("Client id must be the same from previous token")
+			return nil
+
+		}
+	*/
 	// set rest of data
 	ret.RedirectUri = ret.AccessData.RedirectUri
 	ret.UserData = ret.AccessData.UserData
@@ -451,7 +463,7 @@ func (s *Server) FinishAccessRequest(w *Response, r *http.Request, ar *AccessReq
 		if ar.ForceAccessData == nil {
 			// generate access token
 			ret = &AccessData{
-				Client:        ar.Client,
+				ClientId:      ar.Client.GetId(),
 				AuthorizeData: ar.AuthorizeData,
 				AccessData:    ar.AccessData,
 				RedirectUri:   redirectUri,

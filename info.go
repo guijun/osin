@@ -44,14 +44,26 @@ func (s *Server) HandleInfoRequest(w *Response, r *http.Request) *InfoRequest {
 		w.SetError(E_INVALID_REQUEST, "")
 		return nil
 	}
-	if ret.AccessData.Client == nil {
+	//HOPJOY Begin
+	if ret.AccessData.ClientId == "" {
 		w.SetError(E_UNAUTHORIZED_CLIENT, "")
 		return nil
 	}
-	if ret.AccessData.Client.GetRedirectUri() == "" {
+	if ret.AccessData.RedirectUri == "" {
 		w.SetError(E_UNAUTHORIZED_CLIENT, "")
 		return nil
 	}
+	//HOPJOY End
+	/*
+		if ret.AccessData.Client == nil {
+			w.SetError(E_UNAUTHORIZED_CLIENT, "")
+			return nil
+		}
+		if ret.AccessData.Client.GetRedirectUri() == "" {
+			w.SetError(E_UNAUTHORIZED_CLIENT, "")
+			return nil
+		}
+	*/
 	if ret.AccessData.IsExpiredAt(s.Now()) {
 		w.SetError(E_INVALID_GRANT, "")
 		return nil
@@ -68,7 +80,7 @@ func (s *Server) FinishInfoRequest(w *Response, r *http.Request, ir *InfoRequest
 	}
 
 	// output data
-	w.Output["client_id"] = ir.AccessData.Client.GetId()
+	w.Output["client_id"] = ir.AccessData.ClientId
 	w.Output["access_token"] = ir.AccessData.AccessToken
 	w.Output["token_type"] = s.Config.TokenType
 	w.Output["expires_in"] = ir.AccessData.CreatedAt.Add(time.Duration(ir.AccessData.ExpiresIn)*time.Second).Sub(s.Now()) / time.Second
