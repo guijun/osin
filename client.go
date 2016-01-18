@@ -25,10 +25,10 @@ type ClientSecretMatcher interface {
 
 // DefaultClient stores all data in struct variables
 type DefaultClient struct {
-	Id          string
-	Secret      string
-	RedirectUri string
-	UserData    interface{}
+	Id          string      `bson:"_id"`
+	Secret      string      `bson:"secret"`
+	RedirectUri string      `bson:"redirecturi"`
+	UserData    interface{} `bson:"userdata"`
 }
 
 func (d *DefaultClient) GetId() string {

@@ -39,28 +39,28 @@ type AuthorizeRequest struct {
 // Authorization data
 type AuthorizeData struct {
 	// Client information
-	Client Client
+	ClientId string `bson:"client"`
 
 	// Authorization code
-	Code string
+	Code string `bson:"code"`
 
 	// Token expiration in seconds
-	ExpiresIn int32
+	ExpiresIn int32 `bson:"expiresin"`
 
 	// Requested scope
-	Scope string
+	Scope string `bson:"scope"`
 
 	// Redirect Uri from request
-	RedirectUri string
+	RedirectUri string `bson:"redirecturi"`
 
 	// State data from request
-	State string
+	State string `bson:"state"`
 
 	// Date created
-	CreatedAt time.Time
+	CreatedAt time.Time `bson:"createdat"`
 
 	// Data to be passed to storage. Not used by the library.
-	UserData interface{}
+	UserData interface{} `bson:"userdata"`
 }
 
 // IsExpired is true if authorization expired
@@ -184,7 +184,7 @@ func (s *Server) FinishAuthorizeRequest(w *Response, r *http.Request, ar *Author
 		} else {
 			// generate authorization token
 			ret := &AuthorizeData{
-				Client:      ar.Client,
+				ClientId:    ar.Client.GetId(),
 				CreatedAt:   s.Now(),
 				ExpiresIn:   ar.Expiration,
 				RedirectUri: ar.RedirectUri,

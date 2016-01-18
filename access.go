@@ -187,21 +187,33 @@ func (s *Server) handleAuthorizationCodeRequest(w *Response, r *http.Request) *A
 		w.SetError(E_UNAUTHORIZED_CLIENT, "")
 		return nil
 	}
-	if ret.AuthorizeData.Client == nil {
+	//HOPJOY Begin
+	if ret.AuthorizeData.RedirectUri == "" {
 		w.SetError(E_UNAUTHORIZED_CLIENT, "")
 		return nil
 	}
-	if ret.AuthorizeData.Client.GetRedirectUri() == "" {
-		w.SetError(E_UNAUTHORIZED_CLIENT, "")
-		return nil
-	}
-	if ret.AuthorizeData.IsExpiredAt(s.Now()) {
+	if ret.AuthorizeData.ClientId != ret.Client.GetId() {
 		w.SetError(E_INVALID_GRANT, "")
 		return nil
 	}
+	//HOPJOY End
+	/*
+		if ret.AuthorizeData.Client == nil {
+			w.SetError(E_UNAUTHORIZED_CLIENT, "")
+			return nil
+		}
+		if ret.AuthorizeData.Client.GetRedirectUri() == "" {
+			w.SetError(E_UNAUTHORIZED_CLIENT, "")
+			return nil
+		}
 
-	// code must be from the client
-	if ret.AuthorizeData.Client.GetId() != ret.Client.GetId() {
+		// code must be from the client
+		if ret.AuthorizeData.Client.GetId() != ret.Client.GetId() {
+			w.SetError(E_INVALID_GRANT, "")
+			return nil
+		}
+	*/
+	if ret.AuthorizeData.IsExpiredAt(s.Now()) {
 		w.SetError(E_INVALID_GRANT, "")
 		return nil
 	}
