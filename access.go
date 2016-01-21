@@ -2,6 +2,7 @@ package osin
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -108,6 +109,9 @@ type AccessTokenGen interface {
 // HandleAccessRequest is the http.HandlerFunc for handling access token requests
 func (s *Server) HandleAccessRequest(w *Response, r *http.Request) *AccessRequest {
 	// Only allow GET or POST
+	if s.Config.EnableDebug {
+		fmt.Println("HandleAccessRequest Checking Method")
+	}
 	if r.Method == "GET" {
 		if !s.Config.AllowGetAccessRequest {
 			w.SetError(E_INVALID_REQUEST, "")
@@ -126,7 +130,9 @@ func (s *Server) HandleAccessRequest(w *Response, r *http.Request) *AccessReques
 		w.InternalError = err
 		return nil
 	}
-
+	if s.Config.EnableDebug {
+		fmt.Println("HandleAccessRequest Checking grant_type")
+	}
 	grantType := AccessRequestType(r.Form.Get("grant_type"))
 	if s.Config.AllowedAccessTypes.Exists(grantType) {
 		switch grantType {
@@ -266,6 +272,9 @@ func extraScopes(access_scopes, refresh_scopes string) bool {
 
 func (s *Server) handleRefreshTokenRequest(w *Response, r *http.Request) *AccessRequest {
 	// get client authentication
+	if s.Config.EnableDebug {
+		fmt.Println("handleRefreshTokenRequest Checking AllowClientSecretInParams")
+	}
 	auth := getClientAuth(w, r, s.Config.AllowClientSecretInParams)
 	if auth == nil {
 		return nil
@@ -286,12 +295,17 @@ func (s *Server) handleRefreshTokenRequest(w *Response, r *http.Request) *Access
 		w.SetError(E_INVALID_GRANT, "")
 		return nil
 	}
-
+	if s.Config.EnableDebug {
+		fmt.Println("handleRefreshTokenRequest Checking getClient")
+	}
 	// must have a valid client
 	if ret.Client = getClient(auth, w.Storage, w); ret.Client == nil {
 		return nil
 	}
 	// must be a valid refresh code
+	if s.Config.EnableDebug {
+		fmt.Println("handleRefreshTokenRequest Checking LoadRefresh")
+	}
 	var err error
 	ret.AccessData, err = w.Storage.LoadRefresh(ret.Code)
 	if err != nil {
@@ -299,14 +313,23 @@ func (s *Server) handleRefreshTokenRequest(w *Response, r *http.Request) *Access
 		w.InternalError = err
 		return nil
 	}
+	if s.Config.EnableDebug {
+		fmt.Println("handleRefreshTokenRequest Checking AccessData")
+	}
 	if ret.AccessData == nil {
 		w.SetError(E_UNAUTHORIZED_CLIENT, "")
 		return nil
+	}
+	if s.Config.EnableDebug {
+		fmt.Println("handleRefreshTokenRequest Checking RedirectUri")
 	}
 	//HOPJOY BEGIN
 	if ret.AccessData.RedirectUri == "" {
 		w.SetError(E_UNAUTHORIZED_CLIENT, "")
 		return nil
+	}
+	if s.Config.EnableDebug {
+		fmt.Println("handleRefreshTokenRequest Checking ClientId")
 	}
 	if ret.AccessData.ClientId != ret.Client.GetId() {
 		w.SetError(E_INVALID_CLIENT, "")

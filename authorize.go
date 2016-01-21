@@ -1,6 +1,7 @@
 package osin
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"time"
@@ -103,7 +104,9 @@ func (s *Server) HandleAuthorizeRequest(w *Response, r *http.Request) *Authorize
 		Authorized:  false,
 		HttpRequest: r,
 	}
-
+	if s.Config.EnableDebug {
+		fmt.Println("HandleAuthorizeRequest Check GetClient")
+	}
 	// must have a valid client
 	ret.Client, err = w.Storage.GetClient(r.Form.Get("client_id"))
 	if err != nil {
@@ -111,27 +114,39 @@ func (s *Server) HandleAuthorizeRequest(w *Response, r *http.Request) *Authorize
 		w.InternalError = err
 		return nil
 	}
+	if s.Config.EnableDebug {
+		fmt.Println("HandleAuthorizeRequest Check Client")
+	}
 	if ret.Client == nil {
 		w.SetErrorState(E_UNAUTHORIZED_CLIENT, "", ret.State)
 		return nil
+	}
+	if s.Config.EnableDebug {
+		fmt.Println("HandleAuthorizeRequest Check GetRedirectUri")
 	}
 	if ret.Client.GetRedirectUri() == "" {
 		w.SetErrorState(E_UNAUTHORIZED_CLIENT, "", ret.State)
 		return nil
 	}
-
+	if s.Config.EnableDebug {
+		fmt.Println("HandleAuthorizeRequest Check GetRedirectUri && FirstUri")
+	}
 	// check redirect uri, if there are multiple client redirect uri's
 	// don't set the uri
 	if ret.RedirectUri == "" && FirstUri(ret.Client.GetRedirectUri(), s.Config.RedirectUriSeparator) == ret.Client.GetRedirectUri() {
 		ret.RedirectUri = FirstUri(ret.Client.GetRedirectUri(), s.Config.RedirectUriSeparator)
 	}
-
+	if s.Config.EnableDebug {
+		fmt.Println("HandleAuthorizeRequest Check ValidateUriList", ret.RedirectUri)
+	}
 	if err = ValidateUriList(ret.Client.GetRedirectUri(), ret.RedirectUri, s.Config.RedirectUriSeparator); err != nil {
 		w.SetErrorState(E_INVALID_REQUEST, "", ret.State)
 		w.InternalError = err
 		return nil
 	}
-
+	if s.Config.EnableDebug {
+		fmt.Println("HandleAuthorizeRequest SetRedirect", ret.RedirectUri)
+	}
 	w.SetRedirect(ret.RedirectUri)
 
 	requestType := AuthorizeRequestType(r.Form.Get("response_type"))
