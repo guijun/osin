@@ -137,7 +137,7 @@ func (s *Server) HandleAuthorizeRequest(w *Response, r *http.Request) *Authorize
 		ret.RedirectUri = FirstUri(ret.Client.GetRedirectUri(), s.Config.RedirectUriSeparator)
 	}
 	if s.Config.EnableDebug {
-		fmt.Println("HandleAuthorizeRequest Check ValidateUriList", ret.RedirectUri)
+		fmt.Println("HandleAuthorizeRequest Check ValidateUriList", ret.RedirectUri,ret.Client.GetRedirectUri())
 	}
 	if err = ValidateUriList(ret.Client.GetRedirectUri(), ret.RedirectUri, s.Config.RedirectUriSeparator); err != nil {
 		w.SetErrorState(E_INVALID_REQUEST, "", ret.State)
@@ -177,7 +177,10 @@ func (s *Server) FinishAuthorizeRequest(w *Response, r *http.Request, ar *Author
 
 	if ar.Authorized {
 		if ar.Type == TOKEN {
-			w.SetRedirectFragment(true)
+			//HOPJOY
+			if false {
+				w.SetRedirectFragment(true)
+			}
 
 			// generate token directly
 			ret := &AccessRequest{
