@@ -130,10 +130,11 @@ func (s *Server) HandleAccessRequest(w *Response, r *http.Request) *AccessReques
 		w.InternalError = err
 		return nil
 	}
-	if s.Config.EnableDebug {
-		fmt.Println("HandleAccessRequest Checking grant_type")
-	}
+
 	grantType := AccessRequestType(r.Form.Get("grant_type"))
+	if s.Config.EnableDebug {
+		fmt.Println("HandleAccessRequest Checking grant_type ",grantType)
+	}
 	if s.Config.AllowedAccessTypes.Exists(grantType) {
 		switch grantType {
 		case AUTHORIZATION_CODE:
