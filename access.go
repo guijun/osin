@@ -133,7 +133,7 @@ func (s *Server) HandleAccessRequest(w *Response, r *http.Request) *AccessReques
 
 	grantType := AccessRequestType(r.Form.Get("grant_type"))
 	if s.Config.EnableDebug {
-		fmt.Println("HandleAccessRequest Checking grant_type ",grantType)
+		fmt.Println("HandleAccessRequest Checking grant_type ", grantType)
 	}
 	if s.Config.AllowedAccessTypes.Exists(grantType) {
 		switch grantType {
@@ -170,18 +170,24 @@ func (s *Server) handleAuthorizationCodeRequest(w *Response, r *http.Request) *A
 		Expiration:      s.Config.AccessExpiration,
 		HttpRequest:     r,
 	}
-
+	if s.Config.EnableDebug {
+		fmt.Println("handleAuthorizationCodeRequest Checking Code")
+	}
 	// "code" is required
 	if ret.Code == "" {
 		w.SetError(E_INVALID_GRANT, "")
 		return nil
 	}
-
+	if s.Config.EnableDebug {
+		fmt.Println("handleAuthorizationCodeRequest getClient")
+	}
 	// must have a valid client
 	if ret.Client = getClient(auth, w.Storage, w); ret.Client == nil {
 		return nil
 	}
-
+	if s.Config.EnableDebug {
+		fmt.Println("handleAuthorizationCodeRequest LoadAuthorize")
+	}
 	// must be a valid authorization code
 	var err error
 	ret.AuthorizeData, err = w.Storage.LoadAuthorize(ret.Code)
@@ -190,14 +196,23 @@ func (s *Server) handleAuthorizationCodeRequest(w *Response, r *http.Request) *A
 		w.InternalError = err
 		return nil
 	}
+	if s.Config.EnableDebug {
+		fmt.Println("handleAuthorizationCodeRequest Checking AuthorizeData")
+	}
 	if ret.AuthorizeData == nil {
 		w.SetError(E_UNAUTHORIZED_CLIENT, "")
 		return nil
+	}
+	if s.Config.EnableDebug {
+		fmt.Println("handleAuthorizationCodeRequest Checking RedirectUri")
 	}
 	//HOPJOY Begin
 	if ret.AuthorizeData.RedirectUri == "" {
 		w.SetError(E_UNAUTHORIZED_CLIENT, "")
 		return nil
+	}
+	if s.Config.EnableDebug {
+		fmt.Println("handleAuthorizationCodeRequest Checking ClientId")
 	}
 	if ret.AuthorizeData.ClientId != ret.Client.GetId() {
 		w.SetError(E_INVALID_GRANT, "")
