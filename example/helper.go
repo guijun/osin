@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/RangelReale/osin"
+	"github.com/guijun/osin"
 	"net/http"
 	"net/url"
 )
